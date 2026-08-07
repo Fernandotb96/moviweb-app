@@ -30,7 +30,8 @@ def initial_db():
 def fetch_movie_from_omdb(title):
     """Fetch information about a movie from OMDb API."""
     if not API_KEY:
-        raise ValueError("API key not set in environment variables.")
+        print("Warning: OMDb API key not set.")
+        return None
     url = f"{OMDB_URL}?apikey={API_KEY}&t={title}"
 
     try:
@@ -56,9 +57,7 @@ def fetch_movie_from_omdb(title):
 def home():
     """Home page route. List the users and a form to create a new one."""
     users = data_manager.get_users()
-    return render_template("home.html", users=users)
-
-# TODO! home.html pendiente
+    return render_template("index.html", users=users)
 
 
 @app.route('/users', methods=['POST'])
