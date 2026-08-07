@@ -6,7 +6,6 @@ db = SQLAlchemy()
 
 class User(db.Model):
     """Represent a user in the database."""
-
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
