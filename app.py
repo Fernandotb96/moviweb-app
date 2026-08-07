@@ -1,24 +1,53 @@
 import os
+import requests
+from dotenv import load_dotenv
 from flask import Flask, render_template, request, flash, redirect, url_for
 from data_manager import DataManager
 from models import db, Movie
 
+load_dotenv()
+API_KEY = os.environ.get('OMDB_API_KEY')
+OMDB_URL = "http://www.omdbapi.com/"
+
 app = Flask(__name__)
-# TODO! app config secret_key
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'data/movies.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 
-db.init_app(app)  # Link the database and the app
+db.init_app(app)
 
-data_manager = DataManager()  # Create an object of your DataManager class
+data_manager = DataManager()
 
 
 def initial_db():
     """Create the database tables. Execute only once at the first launch."""
     with app.app_context():
         db.create_all()
+
+
+def fetch_movie_from_omdb(title):
+    """Fetch information about a movie from OMDb API."""
+    if not API_KEY:
+        raise ValueError("API key not set in environment variables.")
+    url = f"{OMDB_URL}?apikey={API_KEY}&t={title}"
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException as e:
+        print(f"Error fetching movie from OMDb API: {e}")
+        return None
+
+    movie_data = {
+        "name": data.get("Title", title),
+        "director": data.get("Director", "N/A"),
+        "year": data.get("Year", "N/A"),
+        "poster_url": data.get("Poster", "N/A"),
+    }
+    return movie_data
 
 
 @app.route('/')
@@ -69,15 +98,25 @@ def add_movie(user_id):
         flash("Title is required.", "error")
         return redirect(url_for("user_movies", user_id=user_id))
 
-    # OMDb API call
-
-    # new_movie = Movie(name=title, ...)
-
-    # data_manager.add_movie(movie)
-
-    # flash(f"Movie '{title}' added successfully.", "success")
-
-    # return redirect(url_for("user_movies", user_id=user_id))
+    omdb_info = fetch_movie_from_omdb(title)
+    if omdb_info:
+        new_movie = Movie(
+            name=omdb_info["name"],
+            director=omdb_info["director"],
+            year=omdb_info["year"],
+            poster_url=omdb_info["poster_url"],
+            user_id=user_id
+        )
+        data_manager.add_movie(new_movie)
+        flash(f"Movie '{omdb_info['name']}' added successfully.", "success")
+    else:
+        new_movie = Movie(
+            name=title,
+            user_id=user_id
+        )
+        data_manager.add_movie(new_movie)
+        flash(f'"{title}" added, but no info from OMDb API', "warning")
+    return redirect(url_for("user_movies", user_id=user_id))
 
 
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/update', methods=['POST'])
