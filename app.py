@@ -41,11 +41,13 @@ def fetch_movie_from_omdb(title):
         print(f"Error fetching movie from OMDb API: {e}")
         return None
 
+    year_raw = data.get("Year", "")
+    year_digits = "".join(ch for ch in year_raw if ch.isdigit())[:4]
     movie_data = {
         "name": data.get("Title", title),
-        "director": data.get("Director", "N/A"),
-        "year": data.get("Year", "N/A"),
-        "poster_url": data.get("Poster", "N/A"),
+        "director": data.get("Director"),
+        "year": int(year_digits) if year_digits else None,
+        "poster_url": data.get("Poster")
     }
     return movie_data
 
