@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Movies for {{ user.name }} - MoviWeb App{% endblock %}
+{% block content %}
+
+<a class="back-link" href="{{ url_for('home') }}">&larr; Back to Users</a>
+<h1>Movies for {{ user.name }}</h1>
+
+{% if movies %}
+    <div class="movie-grid">
+        {% for movie in movies %}
+            <div class="movie-card">
+                {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.name }} poster" class="movie-poster">
+                {% else %}
+                    <div class="movie-poster movie-poster--empty">No poster</div>
+                {% endif %}
+
+                <form action="{{ url_for('update_movie', user_id=user.id, movie_id=movie.id) }}"
+                      method="post" class="update-form">
+                    <input type="text" name="title" value="{{ movie.name }}" required>
+                    <button type="submit" class="btn btn-update">Update</button>
+                </form>
+
+                <p class="movie-detail"><strong>Year:</strong> {{ movie.year or "—" }}</p>
+                <p class="movie-detail"><strong>Director:</strong> {{ movie.director or "—" }}</p>
+
+                <form action="{{ url_for('delete_movie', user_id=user.id, movie_id=movie.id) }}" method="post">
+                    <button type="submit" class="btn btn-delete">Delete</button>
+                </form>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="empty-state">{{ user.name }} doesn't have any favorite movies yet.</p>
+{% endif %}
+
+<section class="add-movie-section">
+    <h2>Add a new movie</h2>
+    <form action="{{ url_for('add_movie', user_id=user.id) }}" method="post" class="add-movie-form">
+        <input type="text" name="title" placeholder="Movie title" required>
+        <button type="submit" class="btn btn-update">Add movie</button>
+    </form>
+</section>
+
+{% endblock %}

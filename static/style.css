@@ -1,0 +1,250 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background-color: #f3f6f4;
+    color: #1b2e23;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+}
+
+
+header {
+    background: linear-gradient(135deg, #0f3324, #1b5e3d);
+    padding: 1.5rem 2rem 1rem;
+}
+
+header h1 {
+    color: #f2f7f4;
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+nav {
+    background: linear-gradient(135deg, #0f3324, #1b5e3d);
+    padding: 0 2rem 1.2rem;
+}
+
+nav a {
+    color: #cdeedc;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+nav a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: #1b5e3d;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+h1 {
+    color: #10281c;
+}
+
+h2 {
+    color: #1b5e3d;
+    margin-top: 2.5rem;
+}
+
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+ul li {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #dde7e1;
+}
+
+ul li a {
+    color: #1b5e3d;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+ul li a:hover {
+    text-decoration: underline;
+}
+
+
+form {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+input[type="text"] {
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #cbd9d1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    flex-grow: 1;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: #1b5e3d;
+    box-shadow: 0 0 0 3px rgba(27, 94, 61, 0.15);
+}
+
+label {
+    font-weight: 600;
+    color: #1b5e3d;
+}
+
+button[type="submit"] {
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: #1b5e3d;
+    color: #f2f7f4;
+    transition: transform 0.05s ease, background-color 0.15s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #164c32;
+}
+
+button[type="submit"]:active {
+    transform: scale(0.97);
+}
+
+.btn-update {
+    background-color: #1b5e3d;
+    color: #f2f7f4;
+}
+
+.btn-update:hover {
+    background-color: #164c32;
+}
+
+.btn-delete {
+    background-color: #7a2323;
+    color: #fbeaea;
+}
+
+.btn-delete:hover {
+    background-color: #611c1c;
+}
+
+
+.movie-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.movie-card {
+    background-color: #ffffff;
+    border: 1px solid #dde7e1;
+    border-radius: 14px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    box-shadow: 0 2px 6px rgba(15, 51, 36, 0.08);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.movie-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(15, 51, 36, 0.14);
+}
+
+.movie-poster {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 10px;
+    background-color: #eef3f0;
+}
+
+.movie-poster--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7c8f83;
+    font-size: 0.85rem;
+}
+
+.update-form {
+    flex-wrap: nowrap;
+}
+
+.update-form input[type="text"] {
+    min-width: 0;
+}
+
+.movie-detail {
+    margin: 0;
+    font-size: 0.92rem;
+    color: #33473c;
+}
+
+.movie-detail strong {
+    color: #10281c;
+}
+
+.empty-state {
+    color: #4a5e53;
+    font-style: italic;
+}
+
+.add-movie-section {
+    margin-top: 2.5rem;
+}
+
+
+.flashes {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1.5rem;
+}
+
+.flash {
+    padding: 0.6rem 0.9rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.flash-success {
+    background-color: #dcf3e4;
+    color: #17532f;
+}
+
+.flash-error {
+    background-color: #fbe4e4;
+    color: #7a2323;
+}
+
+.flash-warning {
+    background-color: #fdf1d6;
+    color: #7a5b12;
+}

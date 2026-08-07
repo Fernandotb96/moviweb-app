@@ -22,7 +22,7 @@ data_manager = DataManager()
 
 
 def initial_db():
-    """Create the database tables. Execute only once at the first launch."""
+    """Create the database tables. Execute only once at launch."""
     with app.app_context():
         db.create_all()
 
@@ -82,8 +82,6 @@ def user_movies(user_id):
 
     movies = data_manager.get_movies(user_id)
     return render_template("movies.html", user=user, movies=movies)
-
-# TODO! movies.html pendiente
 
 
 @app.route('/users/<int:user_id>/movies', methods=['POST'])
@@ -157,4 +155,5 @@ def delete_movie(user_id, movie_id):
 
 
 if __name__ == '__main__':
+    initial_db()
     app.run(debug=True)
