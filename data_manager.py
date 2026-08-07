@@ -1,3 +1,4 @@
+from sqlalchemy.exc import SQLAlchemyError
 from models import db, User, Movie
 
 
@@ -10,10 +11,16 @@ class DataManager:
         """
         Create a new user and save it to the database.
         Returns the newly created User object (already with its id assigned).
+        Raises SQLAlchemyError if the commit fails (the session is rolled
+        back first so it's left in a clean state).
         """
         new_user = User(name=name)
-        db.session.add(new_user)
-        db.session.commit()
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            raise
         return new_user
 
     def get_users(self):
@@ -31,31 +38,48 @@ class DataManager:
         return Movie.query.filter_by(user_id=user_id).all()
 
     def add_movie(self, movie):
-        """Add a new movie to a user's list of favorites."""
-        db.session.add(movie)
-        db.session.commit()
+        """
+        Add a new movie to a user's list of favorites.
+        Raises SQLAlchemyError if the commit fails.
+        """
+        try:
+            db.session.add(movie)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            raise
         return movie
 
     def update_movie(self, movie_id, new_title):
         """
         Update the name/title of an existing movie.
         Returns the updated movie, or None if it wasn't found.
+        Raises SQLAlchemyError if the commit fails.
         """
         movie = db.session.get(Movie, movie_id)
         if movie is None:
             return None
         movie.name = new_title
-        db.session.commit()
+        try:
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            raise
         return movie
 
     def delete_movie(self, movie_id):
         """
         Delete a movie from the database by its id.
         Returns True if it was deleted successfully, False if it wasn't found.
+        Raises SQLAlchemyError if the commit fails.
         """
         movie = db.session.get(Movie, movie_id)
         if movie is None:
             return False
-        db.session.delete(movie)
-        db.session.commit()
+        try:
+            db.session.delete(movie)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            raise
         return True

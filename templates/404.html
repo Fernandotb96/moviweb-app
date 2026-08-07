@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Page not found - MoviWeb App{% endblock %}
+{% block content %}
+
+<div class="error-page">
+    <h1>404 - Page not found</h1>
+    <p>The page you're looking for doesn't exist.</p>
+    <a class="back-link" href="{{ url_for('home') }}">&larr; Back to Users</a>
+</div>
+
+{% endblock %}

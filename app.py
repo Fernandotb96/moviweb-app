@@ -2,6 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, flash, redirect, url_for
+from sqlalchemy.exc import SQLAlchemyError
 from data_manager import DataManager
 from models import db, Movie
 
@@ -12,9 +13,18 @@ OMDB_URL = "http://www.omdbapi.com/"
 app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'data/movies.db')}"
+DATA_DIR = os.path.join(basedir, 'data')
+os.makedirs(DATA_DIR, exist_ok=True)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(DATA_DIR, 'movies.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+
+secret_key = os.environ.get('SECRET_KEY')
+if not secret_key:
+    print("Warning: SECRET_KEY not set in .env, using an insecure default. "
+          "Set SECRET_KEY before deploying to production.")
+    secret_key = 'dev-secret-key-change-in-production'
+app.config['SECRET_KEY'] = secret_key
 
 db.init_app(app)
 
@@ -35,11 +45,18 @@ def fetch_movie_from_omdb(title):
     url = f"{OMDB_URL}?apikey={API_KEY}&t={title}"
 
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=5)
         response.raise_for_status()
         data = response.json()
+    except requests.Timeout:
+        print(f"Timeout while fetching '{title}' from OMDb API.")
+        return None
     except requests.RequestException as e:
         print(f"Error fetching movie from OMDb API: {e}")
+        return None
+
+    if data.get("Response") == "False":
+        print(f"OMDb API couldn't find '{title}': {data.get('Error')}")
         return None
 
     year_raw = data.get("Year", "")
@@ -67,7 +84,13 @@ def create_user():
     if not name:
         flash("Name is required.", "error")
         return redirect(url_for("home"))
-    data_manager.create_user(name)
+
+    try:
+        data_manager.create_user(name)
+    except SQLAlchemyError:
+        flash("Something went wrong while creating the user. Please try again.", "error")
+        return redirect(url_for("home"))
+
     flash(f"User '{name}' created successfully.", "success")
     return redirect(url_for("home"))
 
@@ -98,23 +121,27 @@ def add_movie(user_id):
         return redirect(url_for("user_movies", user_id=user_id))
 
     omdb_info = fetch_movie_from_omdb(title)
-    if omdb_info:
-        new_movie = Movie(
-            name=omdb_info["name"],
-            director=omdb_info["director"],
-            year=omdb_info["year"],
-            poster_url=omdb_info["poster_url"],
-            user_id=user_id
-        )
-        data_manager.add_movie(new_movie)
-        flash(f"Movie '{omdb_info['name']}' added successfully.", "success")
-    else:
-        new_movie = Movie(
-            name=title,
-            user_id=user_id
-        )
-        data_manager.add_movie(new_movie)
-        flash(f'"{title}" added, but no info from OMDb API', "warning")
+    try:
+        if omdb_info:
+            new_movie = Movie(
+                name=omdb_info["name"],
+                director=omdb_info["director"],
+                year=omdb_info["year"],
+                poster_url=omdb_info["poster_url"],
+                user_id=user_id
+            )
+            data_manager.add_movie(new_movie)
+            flash(f"Movie '{omdb_info['name']}' added successfully.", "success")
+        else:
+            new_movie = Movie(
+                name=title,
+                user_id=user_id
+            )
+            data_manager.add_movie(new_movie)
+            flash(f'"{title}" added, but no info from OMDb API', "warning")
+    except SQLAlchemyError:
+        flash("Something went wrong while adding the movie. Please try again.", "error")
+
     return redirect(url_for("user_movies", user_id=user_id))
 
 
@@ -131,7 +158,12 @@ def update_movie(user_id, movie_id):
         flash("Title is required.", "error")
         return redirect(url_for("user_movies", user_id=user_id))
 
-    movie = data_manager.update_movie(movie_id, new_title)
+    try:
+        movie = data_manager.update_movie(movie_id, new_title)
+    except SQLAlchemyError:
+        flash("Something went wrong while updating the movie. Please try again.", "error")
+        return redirect(url_for("user_movies", user_id=user_id))
+
     if movie is None:
         flash("Movie not found.", "error")
     else:
@@ -147,13 +179,32 @@ def delete_movie(user_id, movie_id):
         flash("User not found.", "error")
         return redirect(url_for("home"))
 
-    if data_manager.delete_movie(movie_id):
-        flash(f"Movie '{movie_id}' deleted successfully.", "success")
+    try:
+        deleted = data_manager.delete_movie(movie_id)
+    except SQLAlchemyError:
+        flash("Something went wrong while deleting the movie. Please try again.", "error")
+        return redirect(url_for("user_movies", user_id=user_id))
+
+    if deleted:
+        flash("Movie deleted successfully.", "success")
     else:
         flash("Movie not found.", "error")
     return redirect(url_for("user_movies", user_id=user_id))
 
 
+@app.errorhandler(404)
+def page_not_found():
+    """Custom 404 page for unknown routes."""
+    return render_template("404.html"), 404
+
+
+@app.errorhandler(500)
+def internal_server_error():
+    """Custom 500 page. Also rolls back the session."""
+    db.session.rollback()
+    return render_template("500.html"), 500
+
+
 if __name__ == '__main__':
     initial_db()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
